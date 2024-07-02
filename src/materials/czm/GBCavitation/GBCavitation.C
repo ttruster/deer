@@ -9,6 +9,7 @@
 
 #include "GBCavitation.h"
 #include "NLSystem.h"
+#include "Function.h"
 registerMooseObject("DeerApp", GBCavitation);
 
 InputParameters
@@ -17,22 +18,22 @@ GBCavitation::validParams()
   InputParameters params = CZMComputeLocalTractionIncrementalBase::validParams();
   params.addClassDescription("Sham Needleman grain boundary cavitation model. "
                              "Default parameters are for Grade91 at 600C.");
-  params.addParam<Real>("a0", 5e-5, "Initial cavity radius, a0");
-  params.addParam<Real>("b0", 6e-2, "Initial cavity half spacing, b0");
-  params.addParam<Real>("FN_NI", 2e4, "Normalized nucleation rate constant");
-  params.addParam<Real>("Nmax_NI", 1e3, "Normalized maximum cavity density constant");
-  params.addParam<Real>("sigma_0", 200., "Traction normalization parameter for cavity nucleation");
+  params.addParam<FunctionName>("a0", 5e-5, "Initial cavity radius, a0");
+  params.addParam<FunctionName>("b0", 6e-2, "Initial cavity half spacing, b0");
+  params.addParam<FunctionName>("FN_NI", 2e4, "Normalized nucleation rate constant");
+  params.addParam<FunctionName>("Nmax_NI", 1e3, "Normalized maximum cavity density constant");
+  params.addParam<FunctionName>("sigma_0", 200., "Traction normalization parameter for cavity nucleation");
   params.addParam<Real>("psi_degree", 75., "Cavity half-tip angle");
   params.addParam<Real>("beta_exponent", 2., "Cavity nucleation exponent");
-  params.addParam<Real>("E_GB", 150e3, "Grain boundary opening modulus (stress)");
-  params.addParam<Real>("G_GB", 58.3657588e3, "Grain boundary sliding modulus (stress)");
+  params.addParam<FunctionName>("E_GB", 150e3, "Grain boundary opening modulus (stress)");
+  params.addParam<FunctionName>("G_GB", 58.3657588e3, "Grain boundary sliding modulus (stress)");
   params.addParam<Real>(
       "E_penalty_minus_thickenss", 10, "Element co-penetration penatly at jump = -thickness");
   params.addParam<Real>("E_penalty_after_failure_minus_thickenss",
                         1e6,
                         "Element co-penetration penatly at jump = -thickness");
-  params.addParam<Real>("D_GB", 1e-15, "Grain boundary diffusivity");
-  params.addParam<Real>("eta_sliding", 1e6, "Grain boundary sliding viscosisty");
+  params.addParam<FunctionName>("D_GB", 1e-15, "Grain boundary diffusivity");
+  params.addParam<FunctionName>("eta_sliding", 1e6, "Grain boundary sliding viscosisty");
   params.addParam<Real>("interface_thickness", 0.0113842, "The interface thickness");
   params.addParam<Real>("interface_thickness_after_failure",
                         0.00113842,
@@ -745,16 +746,43 @@ GBCavitation::getInitPropertyValuesFromParams(Real & FN_NI,
                                               Real & beta_exponent,
                                               Real & n_exponent) const
 {
-  FN_NI = getParam<Real>("FN_NI");
-  Nmax_NI = getParam<Real>("Nmax_NI");
-  a0 = getParam<Real>("a0");
-  b0 = getParam<Real>("b0");
+  const FunctionName & FNname = getParam<FunctionName>("FN_NI");
+  const Function * const FNNname = &getFunctionByName(FNname);
+  FN_NI = FNNname->value(_t, _q_point[_qp]);
+  // FN_NI = getParam<Real>("FN_NI");
+  const FunctionName & Nmname = getParam<FunctionName>("Nmax_NI");
+  const Function * const Nmaname = &getFunctionByName(Nmname);
+  Nmax_NI = Nmaname->value(_t, _q_point[_qp]);
+  // Nmax_NI = getParam<Real>("Nmax_NI");
+  const FunctionName & aname = getParam<FunctionName>("a0");
+  const Function * const a0name = &getFunctionByName(aname);
+  a0 = a0name->value(_t, _q_point[_qp]);
+  // a0 = getParam<Real>("a0");
+  const FunctionName & bname = getParam<FunctionName>("b0");
+  const Function * const b0name = &getFunctionByName(bname);
+  b0 = b0name->value(_t, _q_point[_qp]);
+  // b0 = getParam<Real>("b0");
   psi = getParam<Real>("psi_degree");
-  D_GB = getParam<Real>("D_GB");
-  E_GB = getParam<Real>("E_GB");
-  G_GB = getParam<Real>("G_GB");
-  eta_sliding = getParam<Real>("eta_sliding");
-  sigma_0 = getParam<Real>("sigma_0");
+  const FunctionName & Dname = getParam<FunctionName>("D_GB");
+  const Function * const DGname = &getFunctionByName(Dname);
+  D_GB = DGname->value(_t, _q_point[_qp]);
+  // D_GB = getParam<Real>("D_GB");
+  const FunctionName & Ename = getParam<FunctionName>("E_GB");
+  const Function * const EGname = &getFunctionByName(Ename);
+  E_GB = EGname->value(_t, _q_point[_qp]);
+  // E_GB = getParam<Real>("E_GB");
+  const FunctionName & Gname = getParam<FunctionName>("G_GB");
+  const Function * const GGname = &getFunctionByName(Gname);
+  G_GB = GGname->value(_t, _q_point[_qp]);
+  // G_GB = getParam<Real>("G_GB");
+  const FunctionName & ename = getParam<FunctionName>("eta_sliding");
+  const Function * const etname = &getFunctionByName(ename);
+  eta_sliding = etname->value(_t, _q_point[_qp]);
+  // eta_sliding = getParam<Real>("eta_sliding");
+  const FunctionName & sname = getParam<FunctionName>("sigma_0");
+  const Function * const siname = &getFunctionByName(sname);
+  sigma_0 = siname->value(_t, _q_point[_qp]);
+  // sigma_0 = getParam<Real>("sigma_0");
   thickness = getParam<Real>("interface_thickness");
   beta_exponent = getParam<Real>("beta_exponent");
   n_exponent = getParam<Real>("n_exponent");
